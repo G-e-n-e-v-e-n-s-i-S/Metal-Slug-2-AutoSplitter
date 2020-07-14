@@ -1,4 +1,4 @@
-﻿
+
 /*
  * 
  *	Okay here's the plan:
@@ -405,7 +405,9 @@ update
 	
 			if (timeSinceLastScan > 300)
 			{
-				print("scanning for screen");
+				
+				print("[MS2 AutoSplitter] Scanning for screen");
+
 				//Scan for the screen
 				vars.pointerScreen = vars.FindArray(game, vars.scannerTargetScreen);
 			
@@ -414,7 +416,9 @@ update
 				//If the scan was successful
 				if (vars.pointerScreen != IntPtr.Zero)
 				{
-					print("found screen");
+					
+					print("[MS2 AutoSplitter] Found screen");
+					
 					//Create a new memory watcher
 					vars.watcherScreen = new MemoryWatcher<short>(vars.pointerScreen);
 
@@ -586,7 +590,9 @@ split
 			//If the scan was successful
 			if (vars.pointerBossHealth != IntPtr.Zero)
 			{
-				print("found health");
+				
+				print("[MS2 AutoSplitter] Found health");
+				
 				//Create a new memory watcher
 				vars.watcherBossHealth = new MemoryWatcher<short>(vars.pointerBossHealth);
 
