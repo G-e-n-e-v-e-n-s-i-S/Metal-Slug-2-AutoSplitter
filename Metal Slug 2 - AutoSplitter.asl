@@ -1,17 +1,4 @@
 
-/*
- * 
- *	Okay here's the plan:
- *	Signature scan for the screen
- *	Look for the colors of arrays of pixels on screen
- *	Split when these arrays match some predictable values
- *	Signature scan for the health variable of the last boss
- *	Split when his health reaches zero
- * 
- */
-
-
-
 
 
 state("mslug2")
@@ -168,7 +155,7 @@ startup
 
 	//An array of bytes to find the boss's health variable
 	vars.scannerTargetBossHealth = new SigScanTarget(22, "10 00 BE D5 ?? 00 ?? ?? ?? ?? ?? ?? ?? 00 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 0A 00 F4 7C");
-								
+
 
 
 	//The pointer to the boss's health, once we found it with the scan
@@ -224,7 +211,7 @@ init
 		
 		//The footsteps in the sand when the character hits the ground at the start of mission 1
 		//Starts at pixel ( 104 , 147 )
-		vars.colorsFootPrints = new byte[]		{
+		vars.colorsRunStart = new byte[]		{
 													128,	232,	248,	0,
 													96,		192,	240,	0,
 													64,		144,	192,	0,
@@ -237,7 +224,7 @@ init
 													128,	232,	248,	0
 												};
 		
-		vars.offsetFootPrints = 0x2BBE0;
+		vars.offsetRunStart = 0x2BBE0;
 		
 		
 		
@@ -262,7 +249,7 @@ init
 
 		//The rim of Rugname when it hits the ground after phase 1
 		//Starts at pixel ( 159 , 159 )
-		vars.colorsRugname = new byte[]			{
+		vars.colorsBossStart = new byte[]		{
 													88,		104,	104,	0,
 													88,		104,	104,	0,
 													88,		104,	104,	0,
@@ -275,7 +262,7 @@ init
 													88,		104,	104,	0
 												};
 
-		vars.offsetRugname = 0x2F5BC;
+		vars.offsetBossStart = 0x2F5BC;
 
 	}
 
@@ -286,7 +273,7 @@ init
 		
 		//The footsteps in the sand when the character hits the ground at the start of mission 1
 		//Starts at pixel ( 104 , 147 )
-		vars.colorsFootPrints = new byte[]		{
+		vars.colorsRunStart = new byte[]		{
 													132,	235,	255,	255,
 													99,		195,	247,	255,
 													66,		146,	198,	255,
@@ -299,7 +286,7 @@ init
 													132,	235,	255,	255
 												};
 		
-		vars.offsetFootPrints = 0x499CF;
+		vars.offsetRunStart = 0x499CF;
 	
 		
 
@@ -324,7 +311,7 @@ init
 
 		//The rim of Rugname when it hits the ground after phase 1
 		//Starts at pixel ( 159 , 159 )
-		vars.colorsRugname = new byte[]			{
+		vars.colorsBossStart = new byte[]		{
 													90,		105,	107,	255,
 													90,		105,	107,	255,
 													90,		105,	107,	255,
@@ -337,7 +324,7 @@ init
 													90,		105,	107,	255
 												};
 		
-		vars.offsetRugname = 0x4FAAB;
+		vars.offsetBossStart = 0x4FAAB;
 		
 	}
 }
@@ -348,11 +335,6 @@ init
 
 exit
 {
-
-	//Pause if game is not running
-	timer.IsGameTimePaused = true;
-
-
 
 	//The pointers and watchers are no longer valid
 	vars.pointerScreen = IntPtr.Zero;
@@ -388,14 +370,19 @@ update
 		
 		if (vars.watcherScreen.Changed)
 		{
-			//print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! screen changed");
+			
+			//Notify
+			print("[MS2 AutoSplitter] Screen region changed");
+
+
+
 			//Void the pointer
 			vars.pointerScreen = IntPtr.Zero;
 
 		}
-
-		//print(vars.pointerScreen.ToString());
-	
+		
+		
+		
 		//If the screen pointer is void
 		if (vars.pointerScreen == IntPtr.Zero)
 		{
@@ -406,7 +393,10 @@ update
 			if (timeSinceLastScan > 300)
 			{
 				
+				//Notify
 				print("[MS2 AutoSplitter] Scanning for screen");
+
+
 
 				//Scan for the screen
 				vars.pointerScreen = vars.FindArray(game, vars.scannerTargetScreen);
@@ -417,8 +407,11 @@ update
 				if (vars.pointerScreen != IntPtr.Zero)
 				{
 					
+					//Notify
 					print("[MS2 AutoSplitter] Found screen");
-					
+
+
+
 					//Create a new memory watcher
 					vars.watcherScreen = new MemoryWatcher<short>(vars.pointerScreen);
 
@@ -444,12 +437,12 @@ update
 		//Debug print an array
 		//print("Rugname");
 		
-		//vars.PrintArray(vars.ReadArray(game, vars.offsetFootPrints));
+		//vars.PrintArray(vars.ReadArray(game, vars.offsetStart));
 
 		
 	
 		//Check if we should start/restart the timer
-		vars.restart = vars.MatchArray(vars.ReadArray(game, vars.offsetFootPrints), vars.colorsFootPrints);
+		vars.restart = vars.MatchArray(vars.ReadArray(game, vars.offsetRunStart), vars.colorsRunStart);
 		
 	}
 }
@@ -541,13 +534,13 @@ split
 	{
 		
 		//When Rugname hits the ground
-		byte[] pixels = vars.ReadArray(game, vars.offsetRugname);
+		byte[] pixels = vars.ReadArray(game, vars.offsetBossStart);
 	
-		if (vars.MatchArray(pixels, vars.colorsRugname))
+		if (vars.MatchArray(pixels, vars.colorsBossStart))
 		{
 			
 			//Notify
-			print("[MS2 AutoSplitter] Rugname phase 2 starting");
+			print("[MS2 AutoSplitter] Last fight starting");
 
 
 
@@ -592,7 +585,7 @@ split
 			{
 				
 				print("[MS2 AutoSplitter] Found health");
-				
+
 				//Create a new memory watcher
 				vars.watcherBossHealth = new MemoryWatcher<short>(vars.pointerBossHealth);
 
@@ -625,7 +618,7 @@ split
 		{
 			
 			//Notify
-			print("[MS2 AutoSplitter] Monitoring Rugname's health");
+			print("[MS2 AutoSplitter] Monitoring health");
 
 
 
